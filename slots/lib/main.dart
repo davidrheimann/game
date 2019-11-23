@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:circle_wheel_scroll/circle_wheel_scroll_view.dart';
 import 'package:flutter/material.dart';
 import 'package:slots/slots.dart';
 
@@ -22,7 +21,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.amber,
       ),
       home: MyHomePage(title: 'Bad Casino'),
     );
@@ -48,8 +47,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  SlotMachine _sm = new SlotMachine(5, 9);
-
+  SlotMachine _sm = new SlotMachine(5,9);
+  ScrollController _sc = new ScrollController();
+  int _index = 0;
+  double _height = 160;
   void _spin() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -58,10 +59,13 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _sm.spin(0);
-      
+      _index +=100;
+      _sc.animateTo(_height*_index, 
+      duration: const Duration(milliseconds: 3000),
+      curve:Curves.decelerate);
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -70,6 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    final _style = Theme.of(context).textTheme.display4;
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -79,31 +84,218 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: CircleListScrollView(
-          physics: CircleFixedExtentScrollPhysics(),
-          axis: Axis.horizontal,
-          itemExtent: 80,
-          children: <Widget>[
-            for (Symb s in _sm.current())
-              Container(
-                margin: const EdgeInsets.all(15.0),
-                padding: const EdgeInsets.all(3.0),
-                decoration:
-                    BoxDecoration(border: Border.all(color: Colors.blueAccent)),
-                child: Text(
-                  s.value + ' ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 48),
-                ),
+        
+        child: new ConstrainedBox(
+          constraints: BoxConstraints(
+            // Set height to one line, otherwise the whole vertical space is occupied.
+            maxHeight:2.9* _style.fontSize,
+          ),
+          child: new ListWheelScrollView.useDelegate(
+            itemExtent: _style.fontSize,
+            physics: FixedExtentScrollPhysics(),
+            childDelegate: ListWheelChildLoopingListDelegate(
+              children: List<Widget>.generate(
+                15, (index) => (Container(color:Colors.amber,child:Text('${index + 1}', style: _style))),
               ),
-          ],
-          radius: MediaQuery.of(context).size.width * 0.6,
-        ),
+            ),
+          ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _spin,
-        tooltip: 'Spin!',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+       // This trailing comma makes auto-formatting nicer for build methods.
+    ));
   }
+}
+
+/*todo
+pull
+
+slot
+reels
+  reel
+    faces
+      face
+  
+  skin
+    widget symbol(reel, face)
+
+
+
+*/
+
+class Reel extends StatelessWidget
+{
+  ScrollController _sc;
+  Reel(ScrollController sc)
+  {
+    _sc = sc;
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemBuilder:(BuildContext itemContext, index){
+        return Text((index%10).toString(),
+                style: TextStyle(fontWeight: FontWeight.bold,fontSize:48));
+    },
+    controller: _sc
+    
+    );
+    
+  }
+  
+}
+
+class Main extends StatelessWidget
+{
+  ScrollController _sc;
+
+  Widget build(BuildContext context)
+  {
+    return Column(children:<Widget>[ReelsWidget(_sc),
+        
+         Container(height:300, child:ListWheelScrollView(
+            
+                
+                controller: _sc,
+                renderChildrenOutsideViewport: true,
+                clipToSize: false,
+                physics: FixedExtentScrollPhysics(),
+                children: ['a','b','cc','d','e','f','g','h'].map((month) {
+                  return Card(
+                      child: Row(
+                    children: <Widget>[
+                      Expanded(
+                          child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text(
+                          month,
+                          style: TextStyle(fontSize: 24.0),
+                        ),
+                      )),
+                    ],
+                  ));
+                }).toList(),
+                itemExtent: 40.0,
+),
+         )
+        
+        ]/*(
+          // Column is also layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Invoke "debug painting" (press "p" in the console, choose the
+          // "Toggle Debug Paint" action from the Flutter Inspector in Android
+          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+          // to see the wireframe for each widget.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          mainAxisAlignment: MainAxisAlignment.center,
+          
+          children: <Widget>[Text('Hi'),
+            ReelWidget(null),Text('Bye'),
+          ],
+        ),*/
+      );
+  }
+
+}
+
+class ReelsWidget extends StatelessWidget
+{
+  ScrollController _sc;
+  ReelsWidget(ScrollController sc)
+  {
+    _sc = sc;
+  }
+  Widget build(BuildContext buildContext)
+  {
+  return Container(
+          margin: EdgeInsets.symmetric(vertical: 20.0),
+          height: 160.0,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            //scrollDirection: Axis.horizontal,
+            children: <Widget>[
+              Container(
+                width: 50.0,
+                color: Colors.red,
+                child: Reel(_sc),
+              ),
+              Container(
+                width: 50.0,
+                height:160,
+                color: Colors.blue,
+                child: 
+              ListWheelScrollView(
+                
+                controller: _sc,
+                physics: FixedExtentScrollPhysics(),
+                
+                children: ['a','b','c','d','e','f','g','h'].map((month) {
+                  return Card(
+                      child: Row(
+                    children: <Widget>[
+                      Expanded(
+                          child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text(
+                          month,
+                          style: TextStyle(fontSize: 24.0),
+                        ),
+                      )),
+                    ],
+                  ));
+                }).toList(),
+                itemExtent: 40.0,
+),
+              ),
+              Container(
+                width: 50.0,
+                color: Colors.green,
+              ),
+              Container(
+                width: 50.0,
+                color: Colors.yellow,
+              ),
+              Container(
+                width: 50.0,
+                color: Colors.orange,
+              ),
+            ],
+          ),
+        );
+  }
+}
+
+
+FixedExtentScrollController fixedExtentScrollController =
+    new FixedExtentScrollController();
+
+class SymbolWidget extends StatelessWidget
+{
+  Symb _symb;
+  SymbolWidget(Symb symb)
+  {
+    _symb = symb;
+  }
+  @override
+  Widget build(BuildContext context) {
+         return Container(
+        margin: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(3.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.blueAccent)
+        ),
+        child:  Text(_symb.value,
+                style: TextStyle(fontWeight: FontWeight.bold,fontSize:48),
+              ),
+            );
+  }
+
+  
 }

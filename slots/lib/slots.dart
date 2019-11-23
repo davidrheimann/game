@@ -2,43 +2,30 @@ import 'dart:math';
 
 class SlotMachine
 {
-  int _balance = 0;
-  int _autobet = 0;
-  List<Reel> _reels = new List<Reel>();
+
+  List<Reel> reels = new List<Reel>();
   Random _random = new Random(0);
-  int balance()
+
+  Symb next(int reel)
   {
-    return _balance;
+    return reels[reel].next();
   }
-  int payout()
+  int spin(int reel)
   {
-    int payout = _balance;
-    _balance = 0;
-    return payout;
+    return 100 + _random.nextInt(9);
   }
-  void spin(int bet)
-  {
-    
-    _reels.forEach((reel)=>reel._hit = _random.nextInt(reel._symbs.length));
-  }
-  List<Symb> current()
-  {
-    List<Symb> result = new List<Symb>();
-    _reels.forEach((reel)=>result.add(reel._symbs[reel._hit]));    
-    return result;
-  }
-  
-  SlotMachine(int reels, int symbs){
-    for(int i = 0;i < reels;i++)
+
+  SlotMachine(int reelCount, int symbCount){
+    for(int i = 0;i < reelCount;i++)
     {
       Reel r = new Reel();
-      for(int j = 0;j < symbs;j++)
+      for(int j = 0;j < symbCount;j++)
       {
         Symb s = new Symb();
         s.value = (j+1).toString();
         r._symbs.add(s);
       }
-      this._reels.add(r);
+      reels.add(r);
     }
   }
  
@@ -52,6 +39,14 @@ class Reel
   {
     return _symbs[_hit];
   }
+  Symb next()
+  {
+    _hit++;
+    if (_hit == _symbs.length)
+      _hit = 0;
+    return _symbs[_hit];
+  }
+
 }
 
 class Symb
